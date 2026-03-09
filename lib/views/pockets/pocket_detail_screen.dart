@@ -185,7 +185,7 @@ class PocketDetailScreen extends StatelessWidget {
                     (context, index) {
                       final doc = snapshot.data!.docs[index];
                       // Konversi Firestore Doc ke TransactionModel
-                      final trans = TransactionModel.fromFirestore(doc);
+                      final trans = TransactionModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
                       final isIncome = trans.type == 'income';
 
                       return GestureDetector(

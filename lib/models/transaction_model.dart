@@ -19,16 +19,19 @@ class TransactionModel {
     required this.timestamp,
   });
 
-  factory TransactionModel.fromFirestore(DocumentSnapshot doc) {
-    Map data = doc.data() as Map;
+  // Perbaikan factory untuk mendukung pengambilan data dari DocumentSnapshot atau Map mentah
+  factory TransactionModel.fromFirestore(Map<String, dynamic> data, String id) {
     return TransactionModel(
-      id: doc.id,
+      id: id,
       title: data['title'] ?? '',
       amount: (data['amount'] ?? 0).toDouble(),
       type: data['type'] ?? 'expense',
       category: data['category'] ?? 'Lainnya',
       imageUrl: data['imageUrl'],
-      timestamp: (data['timestamp'] as Timestamp).toDate(),
+      // Mengamankan konversi timestamp jika field null di database
+      timestamp: data['timestamp'] != null 
+          ? (data['timestamp'] as Timestamp).toDate() 
+          : DateTime.now(),
     );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:vinflow/views/limits/limit_screen.dart';
 import 'package:vinflow/views/pockets/pocket_list_screen.dart';
+import 'package:vinflow/views/reports/report_screen.dart';
 import 'package:vinflow/views/transactions/transaction_screen.dart';
 
 class MenuGrid extends StatelessWidget {
@@ -32,9 +34,22 @@ class MenuGrid extends StatelessWidget {
               CupertinoPageRoute(builder: (context) => const PocketListScreen()),
             );
           }),
-          _buildMenu(context, CupertinoIcons.graph_circle_fill, "Limit", Colors.red, () {}),
+          _buildMenu(context, CupertinoIcons.graph_circle_fill, "Limit", Colors.red, () {
+            // Navigasi ke Limit
+            Navigator.push(
+              context,
+              CupertinoPageRoute(builder: (context) => const LimitScreen()),
+            );
+          }),
+          
           _buildMenu(context, CupertinoIcons.time_solid, "Riwayat", Colors.green, () {}),
-          _buildMenu(context, CupertinoIcons.doc_text_fill, "Laporan", Colors.purple, () {}),
+          _buildMenu(context, CupertinoIcons.doc_text_fill, "Laporan", Colors.purple, () {
+            // Navigasi ke Laporan
+            Navigator.push(
+              context,
+              CupertinoPageRoute(builder: (context) => const ReportScreen()),
+            );
+          }),
           _buildMenu(context, CupertinoIcons.bell_fill, "Tagihan", Colors.amber, () {}),
           _buildMenu(context, CupertinoIcons.scope, "Target", Colors.teal, () {}),
           _buildMenu(context, CupertinoIcons.ellipsis_circle_fill, "Lainnya", Colors.blueGrey, () {}),

@@ -82,7 +82,7 @@ class TransactionSection extends StatelessWidget {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 final doc = snapshot.data!.docs[index];
-                final trans = TransactionModel.fromFirestore(doc);
+                final trans = TransactionModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
                 return _buildTransactionCard(context, trans);
               },
               childCount: snapshot.data!.docs.length,

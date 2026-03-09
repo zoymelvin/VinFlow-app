@@ -8,11 +8,8 @@ class PocketProvider with ChangeNotifier {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   List<Pocket> _pockets = [];
   
-  // Variabel lokal untuk menyimpan ringkasan hari ini
   double _todayIncome = 0.0;
   double _todayExpense = 0.0;
-
-  // Flag untuk mencegah double listener
   bool _isListening = false;
 
   List<Pocket> get pockets => [..._pockets];
@@ -23,13 +20,10 @@ class PocketProvider with ChangeNotifier {
     return _pockets.fold(0.0, (sum, item) => sum + item.balance);
   }
 
-  /// Memulai sinkronisasi data Kantong dan Transaksi secara Realtime.
-  /// Dipanggil di main.dart menggunakan operator cascade (..fetchPockets())
   void fetchPockets() {
     if (_isListening) return;
     _isListening = true;
 
-    // 1. Listen ke data Kantong secara Realtime
     _db.collection('pockets').snapshots().listen((snapshot) {
       _pockets = snapshot.docs.map((doc) {
         final data = doc.data();
@@ -45,18 +39,14 @@ class PocketProvider with ChangeNotifier {
         );
       }).toList();
       
-      // Setelah data kantong berubah, hitung ulang ringkasan hari ini
       _calculateTodaySummary();
       notifyListeners();
     });
   }
 
-  /// Fungsi internal untuk menghitung pemasukan & pengeluaran hari ini (WIB)
-  /// Menggunakan collectionGroup agar mencakup semua transaksi dari semua kantong
   Future<void> _calculateTodaySummary() async {
     try {
       final now = DateTime.now();
-      // Menetapkan batas awal hari (00:00:00)
       final startOfDay = DateTime(now.year, now.month, now.day);
       
       final snapshot = await _db.collectionGroup('transactions')
@@ -84,7 +74,6 @@ class PocketProvider with ChangeNotifier {
     }
   }
 
-  /// Menambah kantong baru ke Firestore
   Future<void> addPocket(String name, double balance, IconData icon, Color color) async {
     await _db.collection('pockets').add({
       'name': name,
@@ -95,8 +84,13 @@ class PocketProvider with ChangeNotifier {
     });
   }
 
-  /// Menambah saldo pada kantong spesifik dan mencatat transaksi pemasukan
-  Future<bool> topUpBalance(String pocketId, double currentBalance, double amount, {String? title, String? imageUrl}) async {
+  // FIX: Menambahkan field pocketId ke transaksi masuk
+  Future<bool> topUpBalance(
+    String pocketId, 
+    double currentBalance, 
+    double amount, 
+    {String? title, String? imageUrl, String? category}
+  ) async {
     try {
       final WriteBatch batch = _db.batch();
       DocumentReference pocketRef = _db.collection('pockets').doc(pocketId);
@@ -107,12 +101,14 @@ class PocketProvider with ChangeNotifier {
         'title': title ?? 'Isi Saldo',
         'amount': amount,
         'type': 'income', 
+        'category': category ?? 'Lainnya',
+        'pocketId': pocketId, // PENTING UNTUK LIMIT
         'imageUrl': imageUrl,
         'timestamp': FieldValue.serverTimestamp(),
       });
 
       await batch.commit();
-      _calculateTodaySummary(); // Segera refresh summary harian
+      _calculateTodaySummary(); 
       return true;
     } catch (e) {
       debugPrint("TopUp Error: $e");
@@ -120,8 +116,13 @@ class PocketProvider with ChangeNotifier {
     }
   }
 
-  /// Mengurangi saldo pada kantong spesifik dan mencatat transaksi pengeluaran
-  Future<bool> withdrawBalance(String pocketId, double currentBalance, double amount, {String? title, String? imageUrl}) async {
+  // FIX: Menambahkan field pocketId ke transaksi keluar
+  Future<bool> withdrawBalance(
+    String pocketId, 
+    double currentBalance, 
+    double amount, 
+    {String? title, String? imageUrl, String? category}
+  ) async {
     try {
       final WriteBatch batch = _db.batch();
       DocumentReference pocketRef = _db.collection('pockets').doc(pocketId);
@@ -132,12 +133,14 @@ class PocketProvider with ChangeNotifier {
         'title': title ?? 'Pengeluaran',
         'amount': amount,
         'type': 'expense', 
+        'category': category ?? 'Lainnya',
+        'pocketId': pocketId, // PENTING UNTUK LIMIT
         'imageUrl': imageUrl,
         'timestamp': FieldValue.serverTimestamp(),
       });
 
       await batch.commit();
-      _calculateTodaySummary(); // Segera refresh summary harian
+      _calculateTodaySummary(); 
       return true;
     } catch (e) {
       debugPrint("Withdraw Error: $e");
@@ -145,11 +148,8 @@ class PocketProvider with ChangeNotifier {
     }
   }
 
-  /// Menghapus kantong beserta seluruh sub-koleksi transaksi di dalamnya.
-  /// Mencegah data transaksi "yatim piatu" yang mengotori summary harian.
   Future<void> deletePocket(String pocketId) async {
     try {
-      // 1. Ambil semua dokumen transaksi di dalam sub-koleksi kantong ini
       final transactions = await _db
           .collection('pockets')
           .doc(pocketId)
@@ -157,29 +157,19 @@ class PocketProvider with ChangeNotifier {
           .get();
 
       final WriteBatch batch = _db.batch();
-
-      // 2. Tambahkan setiap transaksi ke batch delete
       for (var doc in transactions.docs) {
         batch.delete(doc.reference);
       }
-
-      // 3. Tambahkan dokumen kantong induk ke batch delete
       batch.delete(_db.collection('pockets').doc(pocketId));
 
-      // 4. Commit penghapusan massal (atomik)
       await batch.commit();
-      
-      // 5. Hitung ulang ringkasan agar Dashboard terupdate menjadi Rp0 jika perlu
       await _calculateTodaySummary();
       notifyListeners();
-      
-      debugPrint("Pocket and its transactions deleted successfully");
     } catch (e) {
       debugPrint("Delete Error: $e");
     }
   }
 
-  /// Transfer saldo antar kantong dengan pencatatan transaksi ganda (Income & Expense)
   Future<bool> transferBalance({
     required Pocket fromPocket,
     required Pocket toPocket,
@@ -198,6 +188,8 @@ class PocketProvider with ChangeNotifier {
           'title': 'Transfer ke ${toPocket.name}',
           'amount': amount,
           'type': 'expense',
+          'category': 'Transfer',
+          'pocketId': fromPocket.id,
           'timestamp': FieldValue.serverTimestamp(),
         });
 
@@ -206,10 +198,12 @@ class PocketProvider with ChangeNotifier {
           'title': 'Terima dari ${fromPocket.name}',
           'amount': amount,
           'type': 'income',
+          'category': 'Transfer',
+          'pocketId': toPocket.id,
           'timestamp': FieldValue.serverTimestamp(),
         });
       });
-      _calculateTodaySummary(); // Segera refresh summary harian
+      _calculateTodaySummary(); 
       return true;
     } catch (e) {
       debugPrint("Transfer Gagal: $e");

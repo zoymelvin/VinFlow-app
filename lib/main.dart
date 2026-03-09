@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:vinflow/providers/limit_provider.dart';
 import 'package:vinflow/providers/pocket_provider.dart';
 import 'package:vinflow/providers/profile_provider.dart';
+import 'package:vinflow/providers/report_provider.dart';
 import 'firebase_options.dart'; 
 import 'core/theme/app_theme.dart';
 import 'providers/transaction_provider.dart';
@@ -29,16 +31,11 @@ class VinFlowApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // Provider untuk manajemen transaksi
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
-        
-        // FIX: Menambahkan cascade operator (..fetchPockets()) agar data kantong 
-        // langsung ditarik secara realtime saat aplikasi pertama kali dijalankan.
-        // Ini akan menyelesaikan masalah saldo Rp0 di Dashboard.
         ChangeNotifierProvider(create: (_) => PocketProvider()..fetchPockets()),
-        
-        // Provider untuk manajemen profil user
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider(create: (_) => ReportProvider()),
+        ChangeNotifierProvider(create: (_) => LimitProvider()),
       ],
       child: CupertinoApp(
         title: 'VinFlow',
