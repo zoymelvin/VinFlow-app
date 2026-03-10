@@ -10,17 +10,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: subosito/flutter-action@v2
+      
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
       - name: Build Web
         run: |
           flutter pub get
-          # Gunakan build standar, logika renderer ada di index.html
+          # Melakukan clean agar tidak ada sisa build lama
+          flutter clean
+          # Build dengan flag yang biasa kamu pakai di Netlify
           flutter build web --release --base-href "/${{ github.event.repository.name }}/" --no-tree-shake-icons
 
-      - name: Deploy
+      - name: Post Build Fix
+        run: |
+          # Menghapus flutter_service_worker.js jika ada. 
+          # Ini trik rahasia agar browser iPhone tidak menyimpan cache rusak yang bikin LAG.
+          rm -f build/web/flutter_service_worker.js
+
+      - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: build/web

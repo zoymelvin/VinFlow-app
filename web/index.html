@@ -2,56 +2,23 @@
 <html>
 <head>
   <base href="$FLUTTER_BASE_HREF">
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="VinFlow - Personal Financial Tracker.">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="VinFlow">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
   <title>VinFlow</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-  
-  <style>
-    /* Logika Baru: Memaksa warna background agar tidak glitch abu-abu */
-    body {
-      background-color: #4F46E5 !important; /* Warna Indigo dasarmu */
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      -webkit-overflow-scrolling: touch;
-    }
-    #flutter_app {
-      width: 100%;
-      height: 100%;
-    }
-  </style>
 </head>
-<body>
-  <div id="flutter_app"></div>
-  
-  <script>
-    window.addEventListener('load', function(ev) {
-      // Deteksi iOS yang lebih akurat
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      
-      // LOGIKA: Paksa HTML renderer total untuk semua perangkat mobile
-      window.flutterWebRenderer = isIOS ? "html" : "canvaskit";
-
-      {{flutter_js}}
-      {{flutter_build_config}}
-
-      _flutter.loader.load({
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine({
-            renderer: window.flutterWebRenderer,
-            // Logika: Tambahkan parameter agar engine lebih ringan
-            useColorEmoji: true,
-          }).then(function(appRunner) {
-            appRunner.runApp();
-          });
-        }
-      });
-    });
-  </script>
+<body style="background-color: #4F46E5;">
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
