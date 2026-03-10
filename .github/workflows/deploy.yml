@@ -10,20 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
-      - name: Install Flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
       - name: Build Web
         run: |
           flutter pub get
-          # Gunakan perintah build standar tanpa flag renderer di sini
-          # karena penentuan renderer sudah kita kunci di index.html
+          # Gunakan build standar, logika renderer ada di index.html
           flutter build web --release --base-href "/${{ github.event.repository.name }}/" --no-tree-shake-icons
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: build/web
