@@ -3,7 +3,7 @@ name: Deploy VinFlow to GitHub Pages
 on:
   push:
     branches:
-      - main # Jalankan otomatis saat kamu push ke branch main
+      - main
 
 jobs:
   build:
@@ -19,8 +19,8 @@ jobs:
       - name: Build Web
         run: |
           flutter pub get
-          # FIX: Tambahkan flag --no-tree-shake-icons agar tidak error saat compile
-          flutter build web --release --base-href "/${{ github.event.repository.name }}/" --no-tree-shake-icons
+          # Perbaikan: Menggunakan --web-renderer auto agar lancar di HP
+          flutter build web --release --base-href "/${{ github.event.repository.name }}/" --web-renderer auto --no-tree-shake-icons
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
