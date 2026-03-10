@@ -208,7 +208,6 @@ class _AddLimitScreenState extends State<AddLimitScreen> {
           if (_amountController.text.isEmpty) return;
           final double amount = double.parse(_amountController.text.replaceAll('.', ''));
           
-          // PERBAIKAN: Set startDate ke pukul 00:00:00 hari ini agar transaksi sebelumnya terhitung
           final now = DateTime.now();
           final startOfToday = DateTime(now.year, now.month, now.day);
 
@@ -218,7 +217,7 @@ class _AddLimitScreenState extends State<AddLimitScreen> {
             limitAmount: amount,
             targetCategory: _selectedCategory,
             targetPocketId: _selectedPocketId,
-            startDate: startOfToday, // Memastikan transaksi hari ini tercatat
+            startDate: startOfToday, 
             endDate: startOfToday.add(const Duration(days: 30)),
           );
 

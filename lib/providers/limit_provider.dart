@@ -19,8 +19,6 @@ class LimitProvider with ChangeNotifier {
     _limitSubscription = _db.collection('limits').snapshots().listen((snapshot) {
       _limits = snapshot.docs.map((doc) => LimitModel.fromFirestore(doc.data(), doc.id)).toList();
       _isLoading = false;
-      
-      // TRIGGER REBUILD: Pastikan UI tahu ada data baru untuk dihitung
       notifyListeners(); 
     }, onError: (e) {
       _isLoading = false;
@@ -28,36 +26,22 @@ class LimitProvider with ChangeNotifier {
     });
   }
 
-  // Fungsi kalkulasi yang lebih kuat dengan filter ganda
-  Future<double> getRemainingAmount(LimitModel limit) async {
-    double spent = 0;
+  // Fungsi memperbarui nominal limit (Emergency Top-Up)
+  Future<void> updateLimitAmount(String limitId, double additionalAmount, double currentLimit) async {
     try {
-      final snapshot = await _db.collectionGroup('transactions')
-          .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(limit.startDate))
-          .where('timestamp', isLessThanOrEqualTo: Timestamp.fromDate(limit.endDate))
-          .where('type', isEqualTo: 'expense')
-          .get();
-
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        
-        // Periksa Kategori
-        bool matchCategory = limit.targetCategory != null && 
-                            data['category'] == limit.targetCategory;
-        
-        // Periksa ID Kantong (Gunakan field pocketId yang sudah kita tanam)
-        String? txPocketId = data['pocketId'] ?? doc.reference.parent.parent?.id;
-        bool matchPocket = limit.targetPocketId != null && txPocketId == limit.targetPocketId;
-
-        if (matchCategory || matchPocket) {
-          spent += (data['amount'] ?? 0).toDouble();
-        }
-      }
+      await _db.collection('limits').doc(limitId).update({
+        'limitAmount': currentLimit + additionalAmount,
+        // Reset flag notifikasi agar user dapat peringatan lagi jika nanti menipis kembali
+        'hasSentWarning': false, 
+        'hasSentCritical': false,
+      });
     } catch (e) {
-      debugPrint("Kalkulasi Limit Error: $e");
+      debugPrint("Gagal update limit: $e");
     }
-    
-    double remaining = limit.limitAmount - spent;
+  }
+
+  double getRemainingAmountSync(LimitModel limit) {
+    double remaining = limit.limitAmount - limit.totalSpent;
     return remaining < 0 ? 0 : remaining;
   }
 

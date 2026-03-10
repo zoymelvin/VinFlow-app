@@ -23,7 +23,6 @@ class _TransferScreenState extends State<TransferScreen> {
   @override
   void initState() {
     super.initState();
-    // Listener untuk mengaktifkan/menonaktifkan tombol secara real-time
     _amountController.addListener(_validateForm);
   }
 
@@ -39,27 +38,27 @@ class _TransferScreenState extends State<TransferScreen> {
     super.dispose();
   }
 
-  // Fungsi Munculkan Popup Konfirmasi Sebelum Proses
   void _showConfirmationDialog() {
-    final _ = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
     final String amountText = _amountController.text;
 
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
         title: Text("Konfirmasi Transfer", 
-          style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
         content: Column(
           children: [
             const SizedBox(height: 12),
             Text("Apakah kamu yakin ingin mengirim saldo sebesar:", 
-              style: GoogleFonts.inter(fontSize: 13)),
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(fontSize: 13)),
             const SizedBox(height: 8),
-            Text(amountText, 
-              style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 18, color: Colors.blue)),
+            Text("Rp $amountText", 
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18, color: const Color(0xFF007BFF))),
             const SizedBox(height: 8),
             Text("ke ${selectedTarget?.name}?", 
-              style: GoogleFonts.inter(fontSize: 13)),
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(fontSize: 13)),
           ],
         ),
         actions: [
@@ -69,8 +68,8 @@ class _TransferScreenState extends State<TransferScreen> {
           ),
           CupertinoDialogAction(
             isDefaultAction: true,
-            onPressed: () async {
-              Navigator.pop(context); // Tutup Dialog
+            onPressed: () {
+              Navigator.pop(context);
               _processTransfer();
             },
             child: const Text("Transfer Sekarang"),
@@ -95,7 +94,7 @@ class _TransferScreenState extends State<TransferScreen> {
     );
 
     if (success && mounted) {
-      Navigator.pop(context); // Kembali ke Detail Screen
+      Navigator.pop(context); 
     }
   }
 
@@ -108,10 +107,22 @@ class _TransferScreenState extends State<TransferScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: CupertinoNavigationBar(
         middle: Text("Transfer Dana", 
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 16)),
         backgroundColor: Colors.white.withValues(alpha: 0.9),
       ),
+      // FIX: Gunakan bottomNavigationBar agar tombol stay di bawah dan tidak menutupi input
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.only(
+          left: 24, 
+          right: 24, 
+          bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 10 : 24, 
+          top: 10
+        ),
+        color: const Color(0xFFF8FAFC),
+        child: _buildSubmitButton(),
+      ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,45 +131,45 @@ class _TransferScreenState extends State<TransferScreen> {
             
             const SizedBox(height: 32),
             Text("Pilih Kantong Tujuan", 
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 16, color: const Color(0xFF1E293B))),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 16, color: const Color(0xFF1E293B))),
             const SizedBox(height: 16),
             
             _buildTargetSelector(pockets),
 
             const SizedBox(height: 32),
             Text("Nominal Transfer", 
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 16, color: const Color(0xFF1E293B))),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 16, color: const Color(0xFF1E293B))),
             const SizedBox(height: 16),
             
-            CupertinoTextField(
-              controller: _amountController,
-              placeholder: "0",
-              keyboardType: TextInputType.number,
-              padding: const EdgeInsets.all(20),
-              style: GoogleFonts.plusJakartaSans(fontSize: 28, fontWeight: FontWeight.w600, letterSpacing: -1),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
-              ),
-              prefix: Padding(
-                padding: const EdgeInsets.only(left: 20),
-                child: Text("Rp", style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.grey)),
-              ),
-              // FIX 1: Tambahkan Formatter Titik Ribuan
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                _ThousandsSeparatorInputFormatter(),
-              ],
-            ),
+            _buildAmountField(),
             
-            const SizedBox(height: 48),
-            
-            // FIX 2: Tombol diperbaiki logikanya
-            _buildSubmitButton(),
+            const SizedBox(height: 20), // Memberi ruang scroll di bawah
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAmountField() {
+    return CupertinoTextField(
+      controller: _amountController,
+      placeholder: "0",
+      keyboardType: TextInputType.number,
+      padding: const EdgeInsets.all(20),
+      style: GoogleFonts.plusJakartaSans(fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -1),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+      ),
+      prefix: Padding(
+        padding: const EdgeInsets.only(left: 20),
+        child: Text("Rp", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: const Color(0xFF94A3B8))),
+      ),
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        _ThousandsSeparatorInputFormatter(),
+      ],
     );
   }
 
@@ -168,7 +179,7 @@ class _TransferScreenState extends State<TransferScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 30, offset: const Offset(0, 10))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 30, offset: const Offset(0, 10))],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -176,9 +187,9 @@ class _TransferScreenState extends State<TransferScreen> {
           _miniPocketCard(widget.sourcePocket, "Dari"),
           Column(
             children: [
-              const Icon(CupertinoIcons.chevron_right_2, color: Color(0xFFCBD5E1), size: 20),
+              Icon(CupertinoIcons.chevron_right_2, color: Colors.blue.withValues(alpha: 0.3), size: 20),
               const SizedBox(height: 4),
-              Container(width: 40, height: 2, color: const Color(0xFFF1F5F9)),
+              Container(width: 40, height: 2, decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(2))),
             ],
           ),
           selectedTarget == null ? _emptyTargetCard() : _miniPocketCard(selectedTarget!, "Ke"),
@@ -190,7 +201,7 @@ class _TransferScreenState extends State<TransferScreen> {
   Widget _miniPocketCard(Pocket p, String label) {
     return Column(
       children: [
-        Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+        Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w700)),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
@@ -198,7 +209,7 @@ class _TransferScreenState extends State<TransferScreen> {
           child: Icon(p.icon, color: p.color, size: 28),
         ),
         const SizedBox(height: 12),
-        Text(p.name, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
+        Text(p.name, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14, color: const Color(0xFF1E293B))),
       ],
     );
   }
@@ -206,22 +217,22 @@ class _TransferScreenState extends State<TransferScreen> {
   Widget _emptyTargetCard() {
     return Column(
       children: [
-        Text("Ke", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+        Text("Ke", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w700)),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.05), shape: BoxShape.circle),
-          child: const Icon(CupertinoIcons.question, color: Colors.grey, size: 28),
+          decoration: BoxDecoration(color: const Color(0xFFF1F5F9), shape: BoxShape.circle),
+          child: const Icon(CupertinoIcons.question, color: Color(0xFFCBD5E1), size: 28),
         ),
         const SizedBox(height: 12),
-        Text("Pilih Tujuan", style: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500)),
+        Text("Pilih Tujuan", style: GoogleFonts.plusJakartaSans(fontSize: 14, color: const Color(0xFFCBD5E1), fontWeight: FontWeight.w600)),
       ],
     );
   }
 
   Widget _buildTargetSelector(List<Pocket> pockets) {
     return SizedBox(
-      height: 120,
+      height: 110,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -236,24 +247,24 @@ class _TransferScreenState extends State<TransferScreen> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
-              width: 110,
-              margin: const EdgeInsets.only(right: 16),
+              width: 100,
+              margin: const EdgeInsets.only(right: 14),
               decoration: BoxDecoration(
                 color: isSelected ? p.color : Colors.white,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: isSelected ? p.color : const Color(0xFFE2E8F0), width: 1.5),
-                boxShadow: isSelected ? [BoxShadow(color: p.color.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))] : [],
+                boxShadow: isSelected ? [BoxShadow(color: p.color.withValues(alpha: 0.2), blurRadius: 12, offset: const Offset(0, 6))] : [],
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(p.icon, color: isSelected ? Colors.white : p.color, size: 26),
-                  const SizedBox(height: 10),
+                  Icon(p.icon, color: isSelected ? Colors.white : p.color, size: 24),
+                  const SizedBox(height: 8),
                   Text(p.name, 
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13, 
-                      fontWeight: FontWeight.w700,
+                      fontSize: 12, 
+                      fontWeight: FontWeight.w800,
                       color: isSelected ? Colors.white : const Color(0xFF475569))),
                 ],
               ),
@@ -265,28 +276,23 @@ class _TransferScreenState extends State<TransferScreen> {
   }
 
   Widget _buildSubmitButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 64,
-      child: CupertinoButton(
-        padding: EdgeInsets.zero,
-        // FIX 2: Logika ketersediaan tombol
-        onPressed: _isButtonEnabled ? _showConfirmationDialog : null,
-        child: Container(
-          width: double.infinity,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: _isButtonEnabled ? const Color(0xFF007BFF) : const Color(0xFFE2E8F0),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: _isButtonEnabled ? [BoxShadow(color: const Color(0xFF007BFF).withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10))] : [],
-          ),
-          child: Text("Konfirmasi Transfer", 
-            style: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.w800, 
-              fontSize: 17, 
-              color: _isButtonEnabled ? Colors.white : Colors.grey.shade500
-            )),
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      onPressed: _isButtonEnabled ? _showConfirmationDialog : null,
+      child: Container(
+        height: 56,
+        width: double.infinity,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: _isButtonEnabled ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
+          borderRadius: BorderRadius.circular(18),
         ),
+        child: Text("Konfirmasi Transfer", 
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w800, 
+            fontSize: 16, 
+            color: _isButtonEnabled ? Colors.white : const Color(0xFF94A3B8)
+          )),
       ),
     );
   }
@@ -303,7 +309,6 @@ class _TransferScreenState extends State<TransferScreen> {
   }
 }
 
-// FORMATTER TITIK RIBUAN
 class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {

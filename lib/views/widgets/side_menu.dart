@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:vinflow/help/help_center_screen.dart';
+import 'package:vinflow/views/security/security_screen.dart';
 import '../profile/profile_screen.dart';
 
 class SideMenu extends StatelessWidget {
@@ -111,8 +113,13 @@ class SideMenu extends StatelessWidget {
                       CupertinoPageRoute(builder: (context) => const ProfileScreen()),
                     );
                   }),
-                  _drawerItem(CupertinoIcons.settings_solid, "Pengaturan", false, () {}),
-                  _drawerItem(CupertinoIcons.shield_fill, "Keamanan", false, () {}),
+                  _drawerItem(CupertinoIcons.shield_fill, "Keamanan", false, () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      CupertinoPageRoute(builder: (context) => const SecurityScreen()),
+                    );
+                  }),
                   
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 20, horizontal: 12),
@@ -127,7 +134,13 @@ class SideMenu extends StatelessWidget {
                     ),
                   ),
                   
-                  _drawerItem(CupertinoIcons.question_circle_fill, "Pusat Bantuan", false, () {}),
+                  _drawerItem(CupertinoIcons.question_circle_fill, "Pusat Bantuan", false, () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      CupertinoPageRoute(builder: (context) => const HelpCenterScreen()),
+                    );
+                  }),
                 ],
               ),
             ),

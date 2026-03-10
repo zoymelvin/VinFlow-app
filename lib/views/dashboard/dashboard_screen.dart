@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:vinflow/views/dashboard/widgets/transaction_list.dart';
+import 'package:vinflow/views/notifications/notification_screen.dart';
 import 'package:vinflow/views/widgets/side_menu.dart';
+import 'package:vinflow/views/history/history_screen.dart'; // Import HistoryScreen
 import 'widgets/header_section.dart';
 import 'widgets/balance_card.dart';
 import 'widgets/menu_grid.dart';
@@ -78,7 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 if (snapshot.hasData && snapshot.data!.exists) {
                                   final data = snapshot.data!.data() as Map<String, dynamic>;
                                   userName = data['name'] ?? userName;
-                                  profileUrl = data['profileImageUrl']; // Ambil URL Foto
+                                  profileUrl = data['profileImageUrl'];
                                 }
 
                                 return Row(
@@ -128,14 +130,70 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               },
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(CupertinoIcons.bell_fill, 
-                                color: Colors.white, size: 20),
+                          
+                          StreamBuilder<QuerySnapshot>(
+                            stream: FirebaseFirestore.instance
+                                .collection('notifications')
+                                .where('isRead', isEqualTo: false)
+                                .snapshots(),
+                            builder: (context, snapshot) {
+                              int unreadCount = snapshot.data?.docs.length ?? 0;
+
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    CupertinoPageRoute(
+                                      builder: (context) => const NotificationScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.15),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        CupertinoIcons.bell_fill,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    if (unreadCount > 0)
+                                      Positioned(
+                                        right: -2,
+                                        top: -2,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFFF43F5E), 
+                                            shape: BoxShape.circle,
+                                          ),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 18,
+                                            minHeight: 18,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              unreadCount > 9 ? "9+" : "$unreadCount",
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -177,7 +235,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     color: const Color(0xFF007BFF),
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700)),
-                            onPressed: () {},
+                            onPressed: () {
+                              // NAVIGASI KE RIWAYAT
+                              Navigator.push(
+                                context,
+                                CupertinoPageRoute(builder: (context) => const HistoryScreen()),
+                              );
+                            },
                           ),
                         ],
                       ),

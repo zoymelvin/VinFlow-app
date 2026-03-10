@@ -9,7 +9,6 @@ import '../../transactions/transaction_detail_screen.dart';
 class TransactionSection extends StatelessWidget {
   const TransactionSection({super.key});
 
-  // Fungsi pembantu untuk mendapatkan Icon dan Warna berdasarkan Kategori atau Judul
   Map<String, dynamic> _getCategoryStyle(String categoryName, bool isIncome) {
     if (isIncome) {
       return {
@@ -18,7 +17,6 @@ class TransactionSection extends StatelessWidget {
       };
     }
 
-    // Normalisasi nama agar pengecekan lebih akurat
     final name = categoryName.trim();
 
     switch (name) {
@@ -35,18 +33,19 @@ class TransactionSection extends StatelessWidget {
       case 'Gaji':
         return {'icon': CupertinoIcons.money_dollar_circle_fill, 'color': Colors.green};
       default:
-        // Jika tidak cocok dengan list di atas, gunakan gaya 'Lainnya'
         return {'icon': CupertinoIcons.ellipsis_circle_fill, 'color': Colors.grey};
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // LOGIKA 24 JAM: Hitung waktu 24 jam yang lalu dari sekarang
     final DateTime twentyFourHoursAgo = DateTime.now().subtract(const Duration(hours: 24));
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collectionGroup('transactions')
+          // Filter hanya transaksi yang lebih baru dari 24 jam lalu
           .where('timestamp', isGreaterThan: Timestamp.fromDate(twentyFourHoursAgo))
           .orderBy('timestamp', descending: true)
           .snapshots(),
@@ -97,13 +96,10 @@ class TransactionSection extends StatelessWidget {
     final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
     final isIncome = trans.type == 'income';
     
-    // PERBAIKAN: Gunakan trans.category jika ada, jika tidak gunakan trans.title 
-    // agar sinkron dengan data di database (image_cbd31e.png)
     final displayCategory = (trans.category.isEmpty || trans.category == 'Lainnya') 
         ? trans.title 
         : trans.category;
 
-    // Ambil gaya (ikon & warna) berdasarkan kategori yang sudah ditentukan
     final style = _getCategoryStyle(displayCategory, isIncome);
 
     return GestureDetector(
@@ -132,7 +128,6 @@ class TransactionSection extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Ikon Kategori Dinamis
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -147,7 +142,6 @@ class TransactionSection extends StatelessWidget {
             ),
             const SizedBox(width: 16),
             
-            // Konten Teks
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,7 +166,6 @@ class TransactionSection extends StatelessWidget {
                       const SizedBox(width: 6),
                       Container(width: 3, height: 3, decoration: const BoxDecoration(color: Color(0xFFCBD5E1), shape: BoxShape.circle)),
                       const SizedBox(width: 6),
-                      // Tampilkan kategori yang sudah diperbaiki
                       Text(
                         displayCategory,
                         style: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.w600),
@@ -183,7 +176,6 @@ class TransactionSection extends StatelessWidget {
               ),
             ),
             
-            // Nominal & Attachment Icon
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [

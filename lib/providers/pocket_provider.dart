@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:intl/intl.dart';
 import '../models/pocket_model.dart';
+import '../models/limit_model.dart';
 
 class PocketProvider with ChangeNotifier {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -74,6 +76,100 @@ class PocketProvider with ChangeNotifier {
     }
   }
 
+  /// LOGIKA NOTIFIKASI: Mengirim data ke koleksi 'notifications'
+  Future<void> _sendToFirestore({
+    required String title, 
+    required String message, 
+    required String type
+  }) async {
+    await _db.collection('notifications').add({
+      'title': title,
+      'message': message,
+      'type': type,
+      'timestamp': FieldValue.serverTimestamp(),
+      'isRead': false,
+    });
+  }
+
+  /// NEW: Notifikasi Berhasil Transaksi
+  Future<void> _sendTransactionNotification({
+    required String type, // 'income', 'expense', 'transfer'
+    required double amount,
+    required String pocketName,
+    String? category,
+    String? targetPocketName,
+    String? title,
+  }) async {
+    final currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+    String formattedAmount = currency.format(amount);
+    
+    String notifTitle = "";
+    String notifMessage = "";
+
+    if (type == 'income') {
+      notifTitle = "💰 Saldo Masuk!";
+      notifMessage = "Berhasil menambah $formattedAmount ke kantong $pocketName. ${title != null ? 'Judul: $title' : ''}";
+    } else if (type == 'expense') {
+      notifTitle = "💸 Transaksi Berhasil";
+      notifMessage = "Berhasil mengeluarkan $formattedAmount dari kantong $pocketName untuk ${category ?? 'Lainnya'}.";
+    } else if (type == 'transfer') {
+      notifTitle = "🔄 Transfer Sukses";
+      notifMessage = "Berhasil mengirim $formattedAmount dari $pocketName ke $targetPocketName.";
+    }
+
+    await _sendToFirestore(title: notifTitle, message: notifMessage, type: type);
+  }
+
+  /// LOGIKA NOTIFIKASI LIMIT: Pengecekan ambang batas saldo limit
+  Future<void> _checkAndSendNotification(LimitModel limit, double currentSpent) async {
+    double remainingPercent = ((limit.limitAmount - currentSpent) / limit.limitAmount);
+    
+    if (remainingPercent <= 0.15 && !limit.hasSentCritical) {
+      await _sendToFirestore(
+        title: "🚨 Batas Kritis!",
+        message: "Waspada! Saldo ${limit.title} tersisa kurang dari 15%. Segera atur pengeluaranmu.",
+        type: "critical"
+      );
+      await _db.collection('limits').doc(limit.id).update({'hasSentCritical': true});
+    } 
+    else if (remainingPercent <= 0.40 && !limit.hasSentWarning) {
+      await _sendToFirestore(
+        title: "⚠️ Anggaran Menipis!",
+        message: "Sisa saldo untuk ${limit.title} tinggal 40% lagi. Yuk, lebih hemat!",
+        type: "warning"
+      );
+      await _db.collection('limits').doc(limit.id).update({'hasSentWarning': true});
+    }
+  }
+
+  Future<void> _updateLimitUsage(String category, String pocketId, double amount) async {
+    try {
+      final limitDocs = await _db.collection('limits').get();
+      final now = DateTime.now();
+
+      for (var doc in limitDocs.docs) {
+        final data = doc.data();
+        final limit = LimitModel.fromFirestore(data, doc.id);
+        
+        if (now.isAfter(limit.startDate) && now.isBefore(limit.endDate)) {
+          bool isMatch = false;
+          if (limit.targetCategory == category) isMatch = true;
+          if (limit.targetPocketId == pocketId) isMatch = true;
+
+          if (isMatch) {
+            double newSpent = limit.totalSpent + amount;
+            await _db.collection('limits').doc(doc.id).update({
+              'totalSpent': FieldValue.increment(amount),
+            });
+            await _checkAndSendNotification(limit, newSpent);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Gagal update usage limit: $e");
+    }
+  }
+
   Future<void> addPocket(String name, double balance, IconData icon, Color color) async {
     await _db.collection('pockets').add({
       'name': name,
@@ -84,7 +180,6 @@ class PocketProvider with ChangeNotifier {
     });
   }
 
-  // FIX: Menambahkan field pocketId ke transaksi masuk
   Future<bool> topUpBalance(
     String pocketId, 
     double currentBalance, 
@@ -102,21 +197,29 @@ class PocketProvider with ChangeNotifier {
         'amount': amount,
         'type': 'income', 
         'category': category ?? 'Lainnya',
-        'pocketId': pocketId, // PENTING UNTUK LIMIT
+        'pocketId': pocketId, 
         'imageUrl': imageUrl,
         'timestamp': FieldValue.serverTimestamp(),
       });
 
       await batch.commit();
+
+      // Trigger Notifikasi Uang Masuk
+      final pocket = _pockets.firstWhere((p) => p.id == pocketId);
+      await _sendTransactionNotification(
+        type: 'income',
+        amount: amount,
+        pocketName: pocket.name,
+        title: title
+      );
+
       _calculateTodaySummary(); 
       return true;
     } catch (e) {
-      debugPrint("TopUp Error: $e");
       return false;
     }
   }
 
-  // FIX: Menambahkan field pocketId ke transaksi keluar
   Future<bool> withdrawBalance(
     String pocketId, 
     double currentBalance, 
@@ -134,40 +237,40 @@ class PocketProvider with ChangeNotifier {
         'amount': amount,
         'type': 'expense', 
         'category': category ?? 'Lainnya',
-        'pocketId': pocketId, // PENTING UNTUK LIMIT
+        'pocketId': pocketId, 
         'imageUrl': imageUrl,
         'timestamp': FieldValue.serverTimestamp(),
       });
 
       await batch.commit();
+
+      // Trigger Notifikasi Uang Keluar
+      final pocket = _pockets.firstWhere((p) => p.id == pocketId);
+      await _sendTransactionNotification(
+        type: 'expense',
+        amount: amount,
+        pocketName: pocket.name,
+        category: category
+      );
+
+      await _updateLimitUsage(category ?? 'Lainnya', pocketId, amount);
       _calculateTodaySummary(); 
       return true;
     } catch (e) {
-      debugPrint("Withdraw Error: $e");
       return false;
     }
   }
 
   Future<void> deletePocket(String pocketId) async {
     try {
-      final transactions = await _db
-          .collection('pockets')
-          .doc(pocketId)
-          .collection('transactions')
-          .get();
-
+      final transactions = await _db.collection('pockets').doc(pocketId).collection('transactions').get();
       final WriteBatch batch = _db.batch();
-      for (var doc in transactions.docs) {
-        batch.delete(doc.reference);
-      }
+      for (var doc in transactions.docs) { batch.delete(doc.reference); }
       batch.delete(_db.collection('pockets').doc(pocketId));
-
       await batch.commit();
       await _calculateTodaySummary();
       notifyListeners();
-    } catch (e) {
-      debugPrint("Delete Error: $e");
-    }
+    } catch (e) { debugPrint("Delete Error: $e"); }
   }
 
   Future<bool> transferBalance({
@@ -203,10 +306,19 @@ class PocketProvider with ChangeNotifier {
           'timestamp': FieldValue.serverTimestamp(),
         });
       });
+
+      // Trigger Notifikasi Transfer
+      await _sendTransactionNotification(
+        type: 'transfer',
+        amount: amount,
+        pocketName: fromPocket.name,
+        targetPocketName: toPocket.name
+      );
+
+      await _updateLimitUsage('Transfer', fromPocket.id, amount);
       _calculateTodaySummary(); 
       return true;
     } catch (e) {
-      debugPrint("Transfer Gagal: $e");
       return false;
     }
   }

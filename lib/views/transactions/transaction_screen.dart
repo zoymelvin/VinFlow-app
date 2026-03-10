@@ -90,32 +90,39 @@ class _TransactionScreenState extends State<TransactionScreen> {
         middle: Text("Catat Transaksi", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 16)),
         backgroundColor: Colors.white,
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TypeSwitcher(currentType: _type, onTypeChanged: (val) => setState(() => _type = val)),
-                const SizedBox(height: 24),
-                _buildAmountField(),
-                const SizedBox(height: 24),
-                Text("Pilih Kantong", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                const SizedBox(height: 12),
-                PocketSelector(pockets: pockets, selectedPocket: _selectedPocket, onSelected: (p) => setState(() => _selectedPocket = p)),
-                const SizedBox(height: 24),
-                _buildCategoryAndPhotoRow(txProv),
-                const SizedBox(height: 24),
-                Text("Catatan Tambahan", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
-                const SizedBox(height: 12),
-                _buildNoteField(),
-                const SizedBox(height: 120),
-              ],
-            ),
-          ),
-          Positioned(bottom: 24, left: 24, right: 24, child: _buildSubmitButton(txProv)),
-        ],
+      // PERBAIKAN: Gunakan bottomNavigationBar agar tombol tidak menutupi input saat keyboard muncul
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.only(
+          left: 24, 
+          right: 24, 
+          bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 10 : 24, // Beri jarak kecil jika keyboard ada
+          top: 10
+        ),
+        color: const Color(0xFFF8FAFC),
+        child: _buildSubmitButton(txProv),
+      ),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TypeSwitcher(currentType: _type, onTypeChanged: (val) => setState(() => _type = val)),
+            const SizedBox(height: 24),
+            _buildAmountField(),
+            const SizedBox(height: 24),
+            Text("Pilih Kantong", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
+            const SizedBox(height: 12),
+            PocketSelector(pockets: pockets, selectedPocket: _selectedPocket, onSelected: (p) => setState(() => _selectedPocket = p)),
+            const SizedBox(height: 24),
+            _buildCategoryAndPhotoRow(txProv),
+            const SizedBox(height: 24),
+            Text("Catatan Tambahan", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
+            const SizedBox(height: 12),
+            _buildNoteField(),
+            const SizedBox(height: 20), // Jarak bawah setelah input terakhir
+          ],
+        ),
       ),
     );
   }
@@ -212,7 +219,17 @@ class _TransactionScreenState extends State<TransactionScreen> {
       },
       child: Container(
         height: 56, width: double.infinity, alignment: Alignment.center,
-        decoration: BoxDecoration(color: txProv.isLoading ? Colors.grey : const Color(0xFF0F172A), borderRadius: BorderRadius.circular(18)),
+        decoration: BoxDecoration(
+          color: txProv.isLoading ? Colors.grey : const Color.fromARGB(255, 23, 61, 148), 
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ]
+        ),
         child: txProv.isLoading ? const CupertinoActivityIndicator(color: Colors.white) : Text("Simpan Transaksi", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 16)),
       ),
     );
