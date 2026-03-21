@@ -12,9 +12,10 @@ class SideMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      // Gunakan warna solid Colors.white agar tidak glitch abu-abu
       width: MediaQuery.of(context).size.width * 0.80,
       decoration: const BoxDecoration(
-        color: CupertinoColors.systemBackground,
+        color: Colors.white, 
         borderRadius: BorderRadius.only(
           topRight: Radius.circular(32),
           bottomRight: Radius.circular(32),
@@ -37,8 +38,8 @@ class SideMenu extends StatelessWidget {
                 if (snapshot.hasData && snapshot.data!.exists) {
                   final data = snapshot.data!.data() as Map<String, dynamic>;
                   name = data['name'] ?? name;
-                  email = data['email'] ?? email; // EMAIL DINAMIS
-                  profileUrl = data['profileImageUrl']; // FOTO DINAMIS
+                  email = data['email'] ?? email;
+                  profileUrl = data['profileImageUrl'];
                 }
 
                 return Padding(
@@ -46,21 +47,16 @@ class SideMenu extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // PERBAIKAN: Hapus BoxShadow berat untuk menghindari glitch abu-abu
                       Container(
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF00509E).withOpacity(0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
+                          // Border tipis sebagai ganti Shadow agar tetap terlihat premium
+                          border: Border.fromBorderSide(BorderSide(color: Color(0xFFF1F5F9), width: 2)),
                         ),
                         child: CircleAvatar(
                           radius: 38,
                           backgroundColor: const Color(0xFF00509E),
-                          // LOGIKA MENAMPILKAN FOTO CLOUDINARY DI SIDE MENU
                           backgroundImage: (profileUrl != null && profileUrl.isNotEmpty)
                               ? NetworkImage(profileUrl)
                               : null,
@@ -77,6 +73,7 @@ class SideMenu extends StatelessWidget {
                           fontSize: 22, 
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.5,
+                          color: const Color(0xFF1E293B),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -84,7 +81,7 @@ class SideMenu extends StatelessWidget {
                         email,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14, 
-                          color: CupertinoColors.secondaryLabel,
+                          color: const Color(0xFF64748B),
                           fontWeight: FontWeight.w400,
                         ),
                       ),
@@ -103,17 +100,17 @@ class SideMenu extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
                 children: [
-                  _drawerItem(CupertinoIcons.house_fill, "Beranda", true, () {
+                  _drawerItem(context, CupertinoIcons.house_fill, "Beranda", true, () {
                     Navigator.pop(context);
                   }),
-                  _drawerItem(CupertinoIcons.person_crop_circle_fill, "Akun", false, () {
+                  _drawerItem(context, CupertinoIcons.person_crop_circle_fill, "Akun", false, () {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
                       CupertinoPageRoute(builder: (context) => const ProfileScreen()),
                     );
                   }),
-                  _drawerItem(CupertinoIcons.shield_fill, "Keamanan", false, () {
+                  _drawerItem(context, CupertinoIcons.shield_fill, "Keamanan", false, () {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
@@ -128,13 +125,13 @@ class SideMenu extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11, 
                         fontWeight: FontWeight.w700, 
-                        color: CupertinoColors.placeholderText,
+                        color: Color(0xFF94A3B8),
                         letterSpacing: 1.2,
                       ),
                     ),
                   ),
                   
-                  _drawerItem(CupertinoIcons.question_circle_fill, "Pusat Bantuan", false, () {
+                  _drawerItem(context, CupertinoIcons.question_circle_fill, "Pusat Bantuan", false, () {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
@@ -168,7 +165,7 @@ class SideMenu extends StatelessWidget {
                   const SizedBox(height: 8),
                   const Text(
                     "© 2026 Joy Melvin. All rights reserved.",
-                    style: TextStyle(fontSize: 10, color: CupertinoColors.placeholderText),
+                    style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
                   ),
                 ],
               ),
@@ -179,7 +176,7 @@ class SideMenu extends StatelessWidget {
     );
   }
 
-  Widget _drawerItem(IconData icon, String title, bool isSelected, VoidCallback onTap) {
+  Widget _drawerItem(BuildContext context, IconData icon, String title, bool isSelected, VoidCallback onTap) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: onTap,
@@ -187,8 +184,9 @@ class SideMenu extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
+          // PERBAIKAN: Gunakan warna solid (tanpa Opacity) agar tidak lag di iPhone
           color: isSelected 
-              ? const Color(0xFF007BFF).withOpacity(0.08) 
+              ? const Color(0xFFE0F0FF) // Warna biru sangat muda tapi solid
               : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
