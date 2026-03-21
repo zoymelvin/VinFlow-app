@@ -18,16 +18,18 @@ jobs:
 
       - name: Build Web
         run: |
-          flutter pub get
-          # Melakukan clean agar tidak ada sisa build lama
+          # 1. Bersihkan sisa build lama agar tidak ada file sampah
           flutter clean
-          # Build dengan flag yang biasa kamu pakai di Netlify
-          flutter build web --release --base-href "/${{ github.event.repository.name }}/" --no-tree-shake-icons
+          flutter pub get
+          
+          # 2. LOGIKA UTAMA: Build tanpa PWA (--pwa-strategy=none) 
+          # Ini kunci agar Chrome iPhone tidak menyimpan cache render yang rusak/abu-abu
+          flutter build web --release --base-href "/${{ github.event.repository.name }}/" --no-tree-shake-icons --pwa-strategy=none
 
       - name: Post Build Fix
         run: |
-          # Menghapus flutter_service_worker.js jika ada. 
-          # Ini trik rahasia agar browser iPhone tidak menyimpan cache rusak yang bikin LAG.
+          # 3. Double Check: Pastikan file service worker benar-benar tidak ada
+          # agar browser dipaksa mengambil aset visual (Indigo & Header) yang paling segar
           rm -f build/web/flutter_service_worker.js
 
       - name: Deploy to GitHub Pages
