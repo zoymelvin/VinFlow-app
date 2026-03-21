@@ -5,13 +5,12 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="VinFlow - Personal Financial Tracker by Joy Melvin.">
-
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="VinFlow">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  
+
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
   <link rel="icon" type="image/png" href="favicon.png"/>
 
@@ -19,11 +18,13 @@
   <link rel="manifest" href="manifest.json">
 
   <style>
-    /* Logika Baru: Memaksa GPU iPhone bekerja lebih keras agar tidak glitch abu-abu */
     body {
-      background-color: #4F46E5; /* Warna dasar Indigo VinFlow */
+      background-color: #4F46E5; /* Warna Indigo agar tidak terlihat abu-abu saat loading */
       margin: 0;
       overflow: hidden;
+      position: fixed;
+      width: 100%;
+      height: 100%;
     }
     canvas {
       -webkit-transform: translate3d(0,0,0);
@@ -32,18 +33,14 @@
   </style>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
-  
   <script>
-    // Logika Pengunci Renderer: Memastikan iPhone tidak pakai CanvasKit yang berat
-    window.addEventListener('load', function(ev) {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      
-      if (isIOS) {
-        // Force HTML renderer untuk kelancaran Sidebar & Header
-        window.flutterWebRenderer = "html";
-      }
-    });
+    // LOGIKA: Paksa Chrome iOS menggunakan HTML Renderer sebelum script dimuat
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      window.flutterWebRenderer = "html";
+    }
   </script>
+  
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
