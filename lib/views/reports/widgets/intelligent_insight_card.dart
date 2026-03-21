@@ -38,7 +38,7 @@ class IntelligentInsightCard extends StatelessWidget {
           const SizedBox(height: 24),
           
           // DATA BARU: Kategori Terboros
-          _row("Kategori Terboros", "$topCategory", const Color(0xFFF43F5E)),
+          _row("Kategori Terboros", topCategory, const Color(0xFFF43F5E)),
           _divider(),
           
           // DATA BARU: Saran Kuota (Sisa Saldo / Hari)

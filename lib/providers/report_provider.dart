@@ -28,7 +28,7 @@ class ReportProvider with ChangeNotifier {
   double _avgDailyExpense = 0;
   double _dailySpendingAdvice = 0;
   String _mostExpensiveCategory = "-";
-  double _trendPercentage = 12.5;
+  final double _trendPercentage = 12.5;
 
   // Getters
   DateTimeRange get selectedDateRange => _selectedDateRange;

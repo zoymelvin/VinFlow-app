@@ -212,7 +212,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
       ),
       title: Text(title, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14, color: const Color(0xFF1E293B))),
       trailing: CupertinoSwitch(
-        activeColor: const Color(0xFF4F46E5),
+        activeTrackColor: const Color(0xFF4F46E5),
         value: value, 
         onChanged: onChanged,
       ),

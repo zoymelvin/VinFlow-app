@@ -78,7 +78,7 @@ class DistributionCard extends StatelessWidget {
                   ],
                 ),
               );
-            }).toList(),
+            }),
         ],
       ),
     );

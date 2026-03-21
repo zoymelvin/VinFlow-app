@@ -195,7 +195,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                 _buildLabel("Negara"),
                 DropdownButtonFormField<String>(
-                  value: _selectedCountry,
+                  initialValue: _selectedCountry,
                   icon: const Icon(CupertinoIcons.chevron_down, size: 16),
                   decoration: _inputDecoration(hint: "", icon: CupertinoIcons.globe),
                   items: _countries.map((String value) {
